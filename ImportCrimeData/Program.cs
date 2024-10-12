@@ -1,16 +1,21 @@
-﻿using EFCore.BulkExtensions;
+﻿using System.Collections.Immutable;
+using EFCore.BulkExtensions;
 using Microsoft.EntityFrameworkCore;
 
 public class Program
 {
-    private const string FolderPath = "/home/mkb/Downloads/CrimeData/AllFiles/";
-    public const string ConnectionString = "Server=localhost;Database=CrimeData;User Id=sa;Password=A1234567a;TrustServerCertificate=True";
+    private const string FolderPath = "/home/mkb/Downloads/CrimeData/";
+
+    public const string ConnectionString =
+        "Server=localhost;Database=CrimeData;User Id=sa;Password=A1234567a;TrustServerCertificate=True";
 
     public static async Task Main()
     {
         var db = new ExampleDbContext();
         await db.Database.MigrateAsync();
-        foreach (var file in Directory.GetFiles(FolderPath).OrderBy(w => w))
+        var files = Directory.GetFiles(FolderPath, "*street.csv", SearchOption.AllDirectories).OrderBy(w => w)
+            .ToImmutableArray();
+        foreach (var file in files)
         {
             Console.WriteLine($"Processing{file}");
             var data = File.ReadLines(file)
@@ -34,8 +39,9 @@ public class Program
 
             var crimeTypes = await db.PopulateShort<CrimeType>(data.Select(w => w.CrimeType).Distinct());
             var month = await db.PopulateShort<Month>(data.Select(w => w.Month).Distinct());
-            var authorities = await db.PopulateShort<Autherity>(data.Select(w => w.Fallswithin).Union(data.Select(q => q.ReportedBy)).Distinct());
-
+            var authorities = await db.PopulateShort<Autherity>(data.Select(w => w.Fallswithin)
+                .Union(data.Select(q => q.ReportedBy)).Distinct());
+            var locations = await db.PopulateInt<Location>(data.Select(w => w.Location).Distinct());
             foreach (var batch in data.Select(item => new CrimeData()
                      {
                          CrimeId = item.CrimeID,
@@ -48,7 +54,7 @@ public class Program
                          LSOAcode = item.LSOAcode,
                          LSOAname = item.LSOAname,
                          LastOutcome = item.LastOutcome,
-                         Location = item.Location,
+                         LocationId = locations[item.Location],
                          Context = item.Context
                      }).Chunk(1000))
             {
@@ -78,6 +84,9 @@ public class ExampleDbContext : DbContext
     {
         modelBuilder.Entity<CrimeData>(w =>
         {
+            w.HasOne(q => q.Location).WithMany(r => r.CrimeDatas)
+                .HasForeignKey(q => q.LocationId);
+
             w.HasOne(q => q.Month).WithMany(q => q.CrimeDatas)
                 .HasForeignKey(t => t.MonthId);
 
@@ -103,7 +112,7 @@ public class CrimeData
     public short? FallswithinId { get; set; }
     public decimal? Longitude { get; set; }
     public decimal? Latitude { get; set; }
-    public string? Location { get; set; }
+    public int? LocationId { get; set; }
     public string? LSOAcode { get; set; }
     public string? LSOAname { get; set; }
     public short? CrimeTypeId { get; set; }
@@ -112,8 +121,15 @@ public class CrimeData
 
     public virtual Month Month { get; set; }
     public virtual CrimeType CrimeType { get; set; }
+
+    public virtual Location Location { get; set; }
     public virtual Autherity ReportedBy { get; set; }
     public virtual Autherity Fallswithin { get; set; }
+}
+
+public sealed class Location : LookupTable<int>
+{
+    public ICollection<CrimeData> CrimeDatas { get; set; }
 }
 
 public sealed class Autherity : LookupTable<short>
@@ -140,23 +156,30 @@ public abstract class LookupTable<T>
 
 public static class Extensions
 {
-    public static async Task<Dictionary<string, short>> PopulateShort<TDbModel>(this DbContext dbContext, IEnumerable<string> items)
+    public static async Task<Dictionary<string, short>> PopulateShort<TDbModel>(this DbContext dbContext,
+        IEnumerable<string> items)
         where TDbModel : LookupTable<short>, new() => await dbContext.Populate<TDbModel, short>(items);
 
-    public static async Task<Dictionary<string, TLookupType>> Populate<TDbModel, TLookupType>(this DbContext db, IEnumerable<string> items)
+    public static async Task<Dictionary<string, int>> PopulateInt<TDbModel>(this DbContext dbContext,
+        IEnumerable<string> items)
+        where TDbModel : LookupTable<int>, new() => await dbContext.Populate<TDbModel, int>(items);
+
+    public static async Task<Dictionary<string, TLookupType>> Populate<TDbModel, TLookupType>(this DbContext db,
+        IEnumerable<string> items, int count = 1)
         where TDbModel : LookupTable<TLookupType>, new()
     {
         var output = await db.Set<TDbModel>().Where(w => items.Contains(w.Value))
             .GroupBy(w => w.Value)
             .ToDictionaryAsync(w => w.Key, w => w.First().Id);
 
-        foreach (var missing in items.Where(w => !output.ContainsKey(w)))
+        var all = items.Where(w => !output.ContainsKey(w)).Select(q => new TDbModel { Value = q }).ToArray();
+        if (all.Any() && count < 2)
         {
-            var part = new TDbModel() { Value = missing };
-            db.Add(part);
-            await db.SaveChangesAsync();
-            output.Add(missing, part.Id);
+            await db.BulkInsertAsync(all);
+           
+            return await db.Populate<TDbModel, TLookupType>(items, count + 1);
         }
+
 
         return output;
     }
