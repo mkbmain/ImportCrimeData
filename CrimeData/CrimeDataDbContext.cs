@@ -1,7 +1,7 @@
-using Data.Entities;
+using CrimeData.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Data;
+namespace CrimeData;
 public class CrimeDataDbContext : DbContext
 {
     public CrimeDataDbContext(string connectionString) : base(GetOptions(connectionString))
@@ -15,13 +15,13 @@ public class CrimeDataDbContext : DbContext
     {
     }
 
-    public virtual DbSet<CrimeData> ImportCrimeData { get; set; }
+    public virtual DbSet<Entities.CrimeData> ImportCrimeData { get; set; }
     public virtual DbSet<CrimeType> CrimeType { get; set; }
     public virtual DbSet<Autherity> Authorities { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<CrimeData>(w =>
+        modelBuilder.Entity<Entities.CrimeData>(w =>
         {
             w.HasOne(q => q.Location).WithMany(r => r.CrimeDatas)
                 .HasForeignKey(q => q.LocationId);

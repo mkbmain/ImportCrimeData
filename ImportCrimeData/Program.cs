@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
+using CrimeData;
+using CrimeData.Entities;
 using Data;
-using Data.Entities;
 using EFCore.BulkExtensions;
 using Microsoft.EntityFrameworkCore;
 
@@ -46,7 +47,7 @@ public class Program
             var authorities = await db.PopulateShort<Autherity>(data.Select(w => w.Fallswithin)
                 .Union(data.Select(q => q.ReportedBy)).Distinct());
             var locations = await db.PopulateInt<Location>(data.Select(w => w.Location).Distinct());
-            foreach (var batch in data.Select(item => new CrimeData()
+            foreach (var batch in data.Select(item => new CrimeData.Entities.CrimeData()
                      {
                          CrimeId = item.CrimeID,
                          CrimeTypeId = crimeTypes[item.CrimeType],

@@ -1,4 +1,4 @@
-namespace Data.Entities;
+namespace CrimeData.Entities;
 public class CrimeData
 {
     public int Id { get; set; }

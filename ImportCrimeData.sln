@@ -2,7 +2,7 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImportCrimeData", "ImportCrimeData\ImportCrimeData.csproj", "{0C5E8289-75DD-4E5C-AEBE-5CF4E08D5BB0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Data", "Data\Data.csproj", "{73E3AA1E-0C3E-4395-B06A-068B5EFC5797}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrimeData", "CrimeData\CrimeData.csproj", "{73E3AA1E-0C3E-4395-B06A-068B5EFC5797}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

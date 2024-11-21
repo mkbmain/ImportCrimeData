@@ -1,4 +1,4 @@
-namespace Data.Entities;
+namespace CrimeData.Entities;
 public abstract class LookupTableBase<T>
 {
     public T Id { get; set; }

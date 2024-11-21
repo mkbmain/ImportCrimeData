@@ -1,4 +1,4 @@
-using Data.Entities;
+using CrimeData.Entities;
 using EFCore.BulkExtensions;
 using Microsoft.EntityFrameworkCore;
 
