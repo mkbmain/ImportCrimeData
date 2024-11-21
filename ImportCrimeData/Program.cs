@@ -1,4 +1,6 @@
 ﻿using System.Collections.Immutable;
+using Data;
+using Data.Entities;
 using EFCore.BulkExtensions;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,9 +11,11 @@ public class Program
     public const string ConnectionString =
         "Server=localhost;Database=CrimeData;User Id=sa;Password=A1234567a;TrustServerCertificate=True";
 
+    private static CrimeDataDbContext GetNewDbContext() => new CrimeDataDbContext(ConnectionString);
+
     public static async Task Main()
     {
-        var db = new ExampleDbContext();
+        var db = GetNewDbContext();
         await db.Database.MigrateAsync();
         var files = Directory.GetFiles(FolderPath, "*street.csv", SearchOption.AllDirectories).OrderBy(w => w)
             .ToImmutableArray();
@@ -63,124 +67,7 @@ public class Program
 
             File.Delete(file);
             await db.DisposeAsync();
-            db = new ExampleDbContext();
+            db = GetNewDbContext();
         }
-    }
-}
-
-public class ExampleDbContext : DbContext
-{
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        if (optionsBuilder.IsConfigured) return;
-        optionsBuilder.UseSqlServer(Program.ConnectionString);
-    }
-
-    public virtual DbSet<CrimeData> ImportCrimeData { get; set; }
-    public virtual DbSet<CrimeType> CrimeType { get; set; }
-    public virtual DbSet<Autherity> Authorities { get; set; }
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<CrimeData>(w =>
-        {
-            w.HasOne(q => q.Location).WithMany(r => r.CrimeDatas)
-                .HasForeignKey(q => q.LocationId);
-
-            w.HasOne(q => q.Month).WithMany(q => q.CrimeDatas)
-                .HasForeignKey(t => t.MonthId);
-
-            w.HasOne(q => q.CrimeType).WithMany(q => q.CrimeDatas)
-                .HasForeignKey(t => t.CrimeTypeId);
-
-            w.HasOne(q => q.ReportedBy).WithMany(q => q.CrimeDatasReportedBy)
-                .HasForeignKey(t => t.ReportedById);
-
-            w.HasOne(q => q.Fallswithin).WithMany(q => q.CrimeDatasFallsWithIn)
-                .HasForeignKey(t => t.FallswithinId);
-        });
-    }
-}
-
-public class CrimeData
-{
-    public int Id { get; set; }
-    public string? CrimeId { get; set; }
-    public short? MonthId { get; set; }
-    public short? ReportedById { get; set; }
-
-    public short? FallswithinId { get; set; }
-    public decimal? Longitude { get; set; }
-    public decimal? Latitude { get; set; }
-    public int? LocationId { get; set; }
-    public string? LSOAcode { get; set; }
-    public string? LSOAname { get; set; }
-    public short? CrimeTypeId { get; set; }
-    public string? LastOutcome { get; set; }
-    public string? Context { get; set; }
-
-    public virtual Month Month { get; set; }
-    public virtual CrimeType CrimeType { get; set; }
-
-    public virtual Location Location { get; set; }
-    public virtual Autherity ReportedBy { get; set; }
-    public virtual Autherity Fallswithin { get; set; }
-}
-
-public sealed class Location : LookupTable<int>
-{
-    public ICollection<CrimeData> CrimeDatas { get; set; }
-}
-
-public sealed class Autherity : LookupTable<short>
-{
-    public ICollection<CrimeData> CrimeDatasReportedBy { get; set; }
-    public ICollection<CrimeData> CrimeDatasFallsWithIn { get; set; }
-}
-
-public sealed class Month : LookupTable<short>
-{
-    public ICollection<CrimeData> CrimeDatas { get; set; }
-}
-
-public sealed class CrimeType : LookupTable<short>
-{
-    public ICollection<CrimeData> CrimeDatas { get; set; }
-}
-
-public abstract class LookupTable<T>
-{
-    public T Id { get; set; }
-    public string Value { get; set; }
-}
-
-public static class Extensions
-{
-    public static async Task<Dictionary<string, short>> PopulateShort<TDbModel>(this DbContext dbContext,
-        IEnumerable<string> items)
-        where TDbModel : LookupTable<short>, new() => await dbContext.Populate<TDbModel, short>(items);
-
-    public static async Task<Dictionary<string, int>> PopulateInt<TDbModel>(this DbContext dbContext,
-        IEnumerable<string> items)
-        where TDbModel : LookupTable<int>, new() => await dbContext.Populate<TDbModel, int>(items);
-
-    public static async Task<Dictionary<string, TLookupType>> Populate<TDbModel, TLookupType>(this DbContext db,
-        IEnumerable<string> items, int count = 1)
-        where TDbModel : LookupTable<TLookupType>, new()
-    {
-        var output = await db.Set<TDbModel>().Where(w => items.Contains(w.Value))
-            .GroupBy(w => w.Value)
-            .ToDictionaryAsync(w => w.Key, w => w.First().Id);
-
-        var all = items.Where(w => !output.ContainsKey(w)).Select(q => new TDbModel { Value = q }).ToArray();
-        if (all.Any() && count < 2)
-        {
-            await db.BulkInsertAsync(all);
-           
-            return await db.Populate<TDbModel, TLookupType>(items, count + 1);
-        }
-
-
-        return output;
     }
 }

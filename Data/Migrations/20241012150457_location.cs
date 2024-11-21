@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace ImportCrimeData.Migrations
+namespace Data.Migrations
 {
     /// <inheritdoc />
     public partial class location : Migration

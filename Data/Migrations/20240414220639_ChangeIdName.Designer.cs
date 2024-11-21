@@ -8,9 +8,9 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace ImportCrimeData.Migrations
+namespace Data.Migrations
 {
-    [DbContext(typeof(ExampleDbContext))]
+    [DbContext(typeof(CrimeDataDbContext))]
     [Migration("20240414220639_ChangeIdName")]
     partial class ChangeIdName
     {

@@ -8,11 +8,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace ImportCrimeData.Migrations
+namespace Data.Migrations
 {
-    [DbContext(typeof(ExampleDbContext))]
-    [Migration("20240323164847_init")]
-    partial class init
+    [DbContext(typeof(CrimeDataDbContext))]
+    [Migration("20241012150457_location")]
+    partial class location
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -52,7 +52,7 @@ namespace ImportCrimeData.Migrations
                     b.Property<string>("Context")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("CrimeID")
+                    b.Property<string>("CrimeId")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<short?>("CrimeTypeId")
@@ -73,8 +73,8 @@ namespace ImportCrimeData.Migrations
                     b.Property<decimal?>("Latitude")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<string>("Location")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("LocationId")
+                        .HasColumnType("int");
 
                     b.Property<decimal?>("Longitude")
                         .HasColumnType("decimal(18,2)");
@@ -90,6 +90,8 @@ namespace ImportCrimeData.Migrations
                     b.HasIndex("CrimeTypeId");
 
                     b.HasIndex("FallswithinId");
+
+                    b.HasIndex("LocationId");
 
                     b.HasIndex("MonthId");
 
@@ -113,6 +115,23 @@ namespace ImportCrimeData.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("CrimeType");
+                });
+
+            modelBuilder.Entity("Location", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Location");
                 });
 
             modelBuilder.Entity("Month", b =>
@@ -142,6 +161,10 @@ namespace ImportCrimeData.Migrations
                         .WithMany("CrimeDatasFallsWithIn")
                         .HasForeignKey("FallswithinId");
 
+                    b.HasOne("Location", "Location")
+                        .WithMany("CrimeDatas")
+                        .HasForeignKey("LocationId");
+
                     b.HasOne("Month", "Month")
                         .WithMany("CrimeDatas")
                         .HasForeignKey("MonthId");
@@ -153,6 +176,8 @@ namespace ImportCrimeData.Migrations
                     b.Navigation("CrimeType");
 
                     b.Navigation("Fallswithin");
+
+                    b.Navigation("Location");
 
                     b.Navigation("Month");
 
@@ -167,6 +192,11 @@ namespace ImportCrimeData.Migrations
                 });
 
             modelBuilder.Entity("CrimeType", b =>
+                {
+                    b.Navigation("CrimeDatas");
+                });
+
+            modelBuilder.Entity("Location", b =>
                 {
                     b.Navigation("CrimeDatas");
                 });
