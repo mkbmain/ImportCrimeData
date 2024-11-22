@@ -17,5 +17,11 @@
     <ItemGroup>
       <ProjectReference Include="..\CrimeData\CrimeData.csproj" />
     </ItemGroup>
+    
+    <ItemGroup>
+      <None Update="appsettings.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
 
 </Project>

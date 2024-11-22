@@ -6,14 +6,15 @@ namespace CrimeData;
 
 public class CrimeDataDbContextFactory : IDesignTimeDbContextFactory<CrimeDataDbContext>
 {
-    public CrimeDataDbContext CreateDbContext(string[] args)
+    public static string GetConnectionString()
     {
         var configuration = new ConfigurationBuilder().SetBasePath(AppContext.BaseDirectory)
             .AddJsonFile("appsettings.json", optional: false)
             .Build();
-        
-        return new CrimeDataDbContext(BuildOptions(configuration.GetConnectionString("Db")!));
+        return configuration.GetConnectionString("Db")!;
     }
+    public CrimeDataDbContext CreateDbContext(string[] args) => new(BuildOptions(GetConnectionString()));
+    
 
     public static DbContextOptions<CrimeDataDbContext> BuildOptions(string connectionString)
         => new DbContextOptionsBuilder<CrimeDataDbContext>().UseSqlServer(connectionString).Options;

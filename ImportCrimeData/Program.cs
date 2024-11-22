@@ -1,24 +1,83 @@
 ﻿using System.Collections.Immutable;
 using CrimeData;
 using CrimeData.Entities;
-using Data;
 using EFCore.BulkExtensions;
 using Microsoft.EntityFrameworkCore;
 
 public class Program
 {
-    private const string FolderPath = "/home/mkb/Downloads/CrimeData/";
+    private static CrimeDataDbContext GetNewDbContext() => new(CrimeDataDbContextFactory.GetConnectionString());
 
-    public const string ConnectionString =
-        "Server=localhost;Database=CrimeData;User Id=sa;Password=A1234567a;TrustServerCertificate=True";
+    private static CrimeDataDbContext _context = GetNewDbContext();
 
-    private static CrimeDataDbContext GetNewDbContext() => new CrimeDataDbContext(ConnectionString);
-
-    public static async Task Main()
+    public static async Task Main(string[] args)
     {
-        var db = GetNewDbContext();
-        await db.Database.MigrateAsync();
-        var files = Directory.GetFiles(FolderPath, "*street.csv", SearchOption.AllDirectories).OrderBy(w => w)
+        await _context.Database.MigrateAsync();
+        if (args.Length < 2)
+        {
+            Console.WriteLine("A path must be specified.");
+            Console.WriteLine("Options:");
+            Console.WriteLine("     ImportCrimeData {FolderPath}");
+            Console.WriteLine("     ImportPostCodes {FilePath}");
+        }
+
+        switch (args[0])
+        {
+            case "ImportCrimeData":
+                if (!Directory.Exists(args[1]))
+                {
+                    Console.WriteLine("The folder path does not exist.");
+                    return;
+                }
+
+                await ImportCrimeData(args[1]);
+                return;
+            case "ImportPostCodes":
+                if (!File.Exists(args[1]))
+                {
+                    Console.WriteLine("The File path does not exist.");
+                    return;
+                }
+
+                await ImportPostCodes(args[1]);
+                break;
+        }
+    }
+
+    private static async Task ImportPostCodes(string filePath)
+    {
+        var parts = File.ReadLines(filePath)
+            .Select(w => w.Split(","))
+            .Select(e => new
+            {
+                PostCode = e[1].Trim().ToLower().Replace(" ", ""),
+                LatitudeStr = e[2].Trim(),
+                LongitudeStr = e[3].Trim()
+            }).Where(e => decimal.TryParse(e.LatitudeStr, out _) && decimal.TryParse(e.LongitudeStr, out _)).ToArray();
+
+        var total = 0;
+        foreach (var item in parts.Chunk(5000))
+        {
+            total += item.Length;
+            var codes = item.Select(e => e.PostCode).ToArray();
+            var existing = await _context.PostCodes.Where(w => codes.Contains(w.Code)).Select(w => w.Code)
+                .ToArrayAsync();
+            var lookup = existing.ToHashSet();
+            await _context.BulkInsertAsync(item.Where(w => !lookup.Contains(w.PostCode))
+                .Select(w => new PostCode
+                {
+                    Code = w.PostCode,
+                    Longitude = decimal.Parse(w.LongitudeStr),
+                    Latitude = decimal.Parse(w.LatitudeStr),
+                }));
+            
+            Console.WriteLine($"Imported {total} postcodes out of {parts.Length}");
+        }
+    }
+
+    private static async Task ImportCrimeData(string folderPath)
+    {
+        var files = Directory.GetFiles(folderPath, "*street.csv", SearchOption.AllDirectories).OrderBy(w => w)
             .ToImmutableArray();
         foreach (var file in files)
         {
@@ -42,11 +101,11 @@ public class Program
                     Context = string.IsNullOrWhiteSpace(w[11]) ? null : w[11]
                 }).ToArray();
 
-            var crimeTypes = await db.PopulateShort<CrimeType>(data.Select(w => w.CrimeType).Distinct());
-            var month = await db.PopulateShort<Month>(data.Select(w => w.Month).Distinct());
-            var authorities = await db.PopulateShort<Autherity>(data.Select(w => w.Fallswithin)
+            var crimeTypes = await _context.PopulateShort<CrimeType>(data.Select(w => w.CrimeType).Distinct());
+            var month = await _context.PopulateShort<Month>(data.Select(w => w.Month).Distinct());
+            var authorities = await _context.PopulateShort<Autherity>(data.Select(w => w.Fallswithin)
                 .Union(data.Select(q => q.ReportedBy)).Distinct());
-            var locations = await db.PopulateInt<Location>(data.Select(w => w.Location).Distinct());
+            var locations = await _context.PopulateInt<Location>(data.Select(w => w.Location).Distinct());
             foreach (var batch in data.Select(item => new CrimeData.Entities.CrimeData()
                      {
                          CrimeId = item.CrimeID,
@@ -63,12 +122,12 @@ public class Program
                          Context = item.Context
                      }).Chunk(1000))
             {
-                await db.BulkInsertAsync(batch);
+                await _context.BulkInsertAsync(batch);
             }
 
             File.Delete(file);
-            await db.DisposeAsync();
-            db = GetNewDbContext();
+            await _context.DisposeAsync();
+            _context = GetNewDbContext();
         }
     }
 }
