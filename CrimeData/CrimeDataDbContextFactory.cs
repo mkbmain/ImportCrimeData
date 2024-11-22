@@ -12,7 +12,7 @@ public class CrimeDataDbContextFactory : IDesignTimeDbContextFactory<CrimeDataDb
             .AddJsonFile("appsettings.json", optional: false)
             .Build();
         
-        return new CrimeDataDbContext(BuildOptions(configuration.GetConnectionString("EventDb")!));
+        return new CrimeDataDbContext(BuildOptions(configuration.GetConnectionString("Db")!));
     }
 
     public static DbContextOptions<CrimeDataDbContext> BuildOptions(string connectionString)

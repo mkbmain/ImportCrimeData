@@ -18,9 +18,15 @@ public class CrimeDataDbContext : DbContext
     public virtual DbSet<Entities.CrimeData> ImportCrimeData { get; set; }
     public virtual DbSet<CrimeType> CrimeType { get; set; }
     public virtual DbSet<Autherity> Authorities { get; set; }
+    public virtual DbSet<PostCode> PostCodes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<PostCode>(entity =>
+        {
+            entity.HasIndex(w => w.Code).IsUnique();
+        });
+        
         modelBuilder.Entity<Entities.CrimeData>(w =>
         {
             w.HasOne(q => q.Location).WithMany(r => r.CrimeDatas)
