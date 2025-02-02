@@ -21,9 +21,9 @@ public class Program
             Console.WriteLine("    ImportPostCodes {FilePath}");
         }
 
-        switch (args[0])
+        switch (args[0].ToLower())
         {
-            case "ImportCrimeData":
+            case "importcrimedata":
                 if (!Directory.Exists(args[1]))
                 {
                     Console.WriteLine("The folder path does not exist.");
@@ -32,7 +32,7 @@ public class Program
 
                 await ImportCrimeData(args[1]);
                 return;
-            case "ImportPostCodes":
+            case "importpostcodes":
                 if (!File.Exists(args[1]))
                 {
                     Console.WriteLine("The File path does not exist.");
@@ -47,31 +47,38 @@ public class Program
     private static async Task ImportPostCodes(string filePath)
     {
         var parts = File.ReadLines(filePath)
-            .Select(w => w.Split(","))
+            .Select(w => w.Split(",").ToList());
+
+        var lonLoc = parts.First().IndexOf(parts.First()
+            .FirstOrDefault(q => q.Contains("long", StringComparison.CurrentCultureIgnoreCase)));
+        var LatLoc = parts.First().IndexOf(parts.First()
+            .FirstOrDefault(q => q.Contains("lat", StringComparison.CurrentCultureIgnoreCase)));
+        var parseAll = parts.Skip(1)
             .Select(e => new
             {
-                PostCode = e[1].Trim().ToLower().Replace(" ", ""),
-                LatitudeStr = e[2].Trim(),
-                LongitudeStr = e[3].Trim()
+                PostCode = e[0].Trim().ToLower().Replace(" ", "").Replace("\"",""),
+                LatitudeStr = e[LatLoc].Trim(),
+                LongitudeStr = e[lonLoc].Trim()
             }).Where(e => decimal.TryParse(e.LatitudeStr, out _) && decimal.TryParse(e.LongitudeStr, out _)).ToArray();
 
         var total = 0;
-        foreach (var item in parts.Chunk(5000))
+        foreach (var item in parseAll.Chunk(5000))
         {
             total += item.Length;
             var codes = item.Select(e => e.PostCode).ToArray();
             var existing = await _context.PostCodes.Where(w => codes.Contains(w.Code)).Select(w => w.Code)
                 .ToArrayAsync();
             var lookup = existing.ToHashSet();
-            await _context.BulkInsertAsync(item.Where(w => !lookup.Contains(w.PostCode))
+            var block = item.Where(w => !lookup.Contains(w.PostCode))
                 .Select(w => new PostCode
                 {
                     Code = w.PostCode,
                     Longitude = decimal.Parse(w.LongitudeStr),
                     Latitude = decimal.Parse(w.LatitudeStr),
-                }));
-            
-            Console.WriteLine($"Imported {total} postcodes out of {parts.Length}");
+                }).ToArray();
+            await _context.BulkInsertAsync(block);
+
+            Console.WriteLine($"Imported {total} postcodes out of {parseAll.Length}");
         }
     }
 

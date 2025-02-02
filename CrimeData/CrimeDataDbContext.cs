@@ -25,6 +25,8 @@ public class CrimeDataDbContext : DbContext
         modelBuilder.Entity<PostCode>(entity =>
         {
             entity.HasIndex(w => w.Code).IsUnique();
+            entity.Property(w => w.Longitude).HasPrecision(12,7);
+            entity.Property(w => w.Latitude).HasPrecision(12,7);
         });
         
         modelBuilder.Entity<Entities.CrimeData>(w =>
