@@ -17,8 +17,8 @@ public class Program
         {
             Console.WriteLine("A path must be specified.");
             Console.WriteLine("Options:");
-            Console.WriteLine("     ImportCrimeData {FolderPath}");
-            Console.WriteLine("     ImportPostCodes {FilePath}");
+            Console.WriteLine("    ImportCrimeData {FolderPath}");
+            Console.WriteLine("    ImportPostCodes {FilePath}");
         }
 
         switch (args[0])
