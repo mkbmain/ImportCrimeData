@@ -118,7 +118,7 @@ namespace Data.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql("drop view CrimeDataReadable");
+            migrationBuilder.Sql("DROP VIEW if exists CrimeDataReadable");
             
             migrationBuilder.DropTable(
                 name: "ImportCrimeData");

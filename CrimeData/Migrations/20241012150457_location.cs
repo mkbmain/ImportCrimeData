@@ -60,6 +60,7 @@ select  icd.CrimeID,ct.Value as CrimeType,icd.Longitude,icd.Latitude,loc.Value a
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.Sql("DROP VIEW if exists CrimeDataReadable");
             migrationBuilder.DropForeignKey(
                 name: "FK_ImportCrimeData_Location_LocationId",
                 table: "ImportCrimeData");
