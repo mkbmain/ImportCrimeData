@@ -115,7 +115,7 @@ public class Program
             var locations = await _context.PopulateInt<Location>(data.Select(w => w.Location).Distinct());
             
             var LsoaNames = await _context.PopulateInt<LSOAName>(data.Select(w => w.LSOAname).Distinct());
-            var LsoaCodes = await _context.PopulateInt<LSOAName>(data.Select(w => w.LSOAcode).Distinct());
+            var LsoaCodes = await _context.PopulateInt<LSOAcode>(data.Select(w => w.LSOAcode).Distinct());
             foreach (var batch in data.Select(item => new CrimeData.Entities.CrimeData()
                      {
                          CrimeId = item.CrimeID,
