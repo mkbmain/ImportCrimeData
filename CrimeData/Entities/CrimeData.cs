@@ -1,4 +1,5 @@
 namespace CrimeData.Entities;
+
 public class CrimeData
 {
     public int Id { get; set; }
@@ -13,7 +14,7 @@ public class CrimeData
     public int? LSOAcodeId { get; set; }
     public int? LSOAnameId { get; set; }
     public short? CrimeTypeId { get; set; }
-    public string? LastOutcome { get; set; }
+    public short? LastOutcomeId { get; set; }
     public string? Context { get; set; }
 
     public virtual Month Month { get; set; }
@@ -24,4 +25,5 @@ public class CrimeData
     public virtual Autherity Fallswithin { get; set; }
     public virtual LSOAcode LsoAcode { get; set; }
     public virtual LSOAName LSOAName { get; set; }
+    public virtual LastOutCome LastOutCome { get; set; }
 }

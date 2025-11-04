@@ -21,6 +21,7 @@ public class CrimeDataDbContext : DbContext
     public virtual DbSet<Autherity> Authorities { get; set; }
     public virtual DbSet<LSOAcode> LSOAcode { get; set; }
     public virtual DbSet<LSOAName> LSOAName { get; set; }
+    public virtual DbSet<LastOutCome> LastOutComes { get; set; }
     public virtual DbSet<PostCode> PostCodes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -34,6 +35,9 @@ public class CrimeDataDbContext : DbContext
 
         modelBuilder.Entity<Entities.CrimeData>(w =>
         {
+            w.HasOne(w => w.LastOutCome).WithMany(w => w.CrimeDatas)
+                .HasForeignKey(q => q.LastOutcomeId);
+
             w.HasOne(w => w.LsoAcode).WithMany(w => w.CrimeDatas)
                 .HasForeignKey(q => q.LSOAcodeId);
 

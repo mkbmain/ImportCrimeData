@@ -116,6 +116,7 @@ public class Program
             
             var LsoaNames = await _context.PopulateInt<LSOAName>(data.Select(w => w.LSOAname).Distinct());
             var LsoaCodes = await _context.PopulateInt<LSOAcode>(data.Select(w => w.LSOAcode).Distinct());
+            var lastOutcomeData = await _context.PopulateShort<LastOutCome>(data.Select(w => w.LastOutcome).Distinct());
             foreach (var batch in data.Select(item => new CrimeData.Entities.CrimeData()
                      {
                          CrimeId = item.CrimeID,
@@ -127,7 +128,7 @@ public class Program
                          Latitude = item.Latitude,
                          LSOAcodeId = LsoaCodes[item.LSOAcode],
                          LSOAnameId = LsoaNames[item.LSOAname],
-                         LastOutcome = item.LastOutcome,
+                         LastOutcomeId = lastOutcomeData[item.LastOutcome],
                          LocationId = locations[item.Location],
                          Context = item.Context
                      }).Chunk(1000))
