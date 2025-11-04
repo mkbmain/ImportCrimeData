@@ -2,6 +2,7 @@ using CrimeData.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace CrimeData;
+
 public class CrimeDataDbContext : DbContext
 {
     public CrimeDataDbContext(string connectionString) : base(GetOptions(connectionString))
@@ -18,6 +19,8 @@ public class CrimeDataDbContext : DbContext
     public virtual DbSet<Entities.CrimeData> ImportCrimeData { get; set; }
     public virtual DbSet<CrimeType> CrimeType { get; set; }
     public virtual DbSet<Autherity> Authorities { get; set; }
+    public virtual DbSet<LSOAcode> LSOAcode { get; set; }
+    public virtual DbSet<LSOAName> LSOAName { get; set; }
     public virtual DbSet<PostCode> PostCodes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -25,12 +28,18 @@ public class CrimeDataDbContext : DbContext
         modelBuilder.Entity<PostCode>(entity =>
         {
             entity.HasIndex(w => w.Code).IsUnique();
-            entity.Property(w => w.Longitude).HasPrecision(12,7);
-            entity.Property(w => w.Latitude).HasPrecision(12,7);
+            entity.Property(w => w.Longitude).HasPrecision(12, 7);
+            entity.Property(w => w.Latitude).HasPrecision(12, 7);
         });
-        
+
         modelBuilder.Entity<Entities.CrimeData>(w =>
         {
+            w.HasOne(w => w.LsoAcode).WithMany(w => w.CrimeDatas)
+                .HasForeignKey(q => q.LSOAcodeId);
+
+            w.HasOne(w => w.LSOAName).WithMany(w => w.CrimeDatas)
+                .HasForeignKey(q => q.LSOAnameId);
+
             w.HasOne(q => q.Location).WithMany(r => r.CrimeDatas)
                 .HasForeignKey(q => q.LocationId);
 

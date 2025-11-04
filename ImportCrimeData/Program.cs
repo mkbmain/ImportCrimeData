@@ -102,8 +102,8 @@ public class Program
                     Longitude = string.IsNullOrWhiteSpace(w[4]) ? (decimal?)null : decimal.Parse(w[4]),
                     Latitude = string.IsNullOrWhiteSpace(w[5]) ? (decimal?)null : decimal.Parse(w[5]),
                     Location = w[6],
-                    LSOAcode = w[7],
-                    LSOAname = w[8],
+                    LSOAcode = w[7] ?? string.Empty,
+                    LSOAname = w[8] ?? string.Empty,
                     LastOutcome = w[10],
                     Context = string.IsNullOrWhiteSpace(w[11]) ? null : w[11]
                 }).ToArray();
@@ -113,6 +113,9 @@ public class Program
             var authorities = await _context.PopulateShort<Autherity>(data.Select(w => w.Fallswithin)
                 .Union(data.Select(q => q.ReportedBy)).Distinct());
             var locations = await _context.PopulateInt<Location>(data.Select(w => w.Location).Distinct());
+            
+            var LsoaNames = await _context.PopulateInt<LSOAName>(data.Select(w => w.LSOAname).Distinct());
+            var LsoaCodes = await _context.PopulateInt<LSOAName>(data.Select(w => w.LSOAcode).Distinct());
             foreach (var batch in data.Select(item => new CrimeData.Entities.CrimeData()
                      {
                          CrimeId = item.CrimeID,
@@ -122,8 +125,8 @@ public class Program
                          FallswithinId = authorities[item.Fallswithin],
                          Longitude = item.Longitude,
                          Latitude = item.Latitude,
-                         LSOAcode = item.LSOAcode,
-                         LSOAname = item.LSOAname,
+                         LSOAcodeId = LsoaCodes[item.LSOAcode],
+                         LSOAnameId = LsoaNames[item.LSOAname],
                          LastOutcome = item.LastOutcome,
                          LocationId = locations[item.Location],
                          Context = item.Context

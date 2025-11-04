@@ -10,8 +10,8 @@ public class CrimeData
     public decimal? Longitude { get; set; }
     public decimal? Latitude { get; set; }
     public int? LocationId { get; set; }
-    public string? LSOAcode { get; set; }
-    public string? LSOAname { get; set; }
+    public int? LSOAcodeId { get; set; }
+    public int? LSOAnameId { get; set; }
     public short? CrimeTypeId { get; set; }
     public string? LastOutcome { get; set; }
     public string? Context { get; set; }
@@ -22,4 +22,6 @@ public class CrimeData
     public virtual Location Location { get; set; }
     public virtual Autherity ReportedBy { get; set; }
     public virtual Autherity Fallswithin { get; set; }
+    public virtual LSOAcode LsoAcode { get; set; }
+    public virtual LSOAName LSOAName { get; set; }
 }

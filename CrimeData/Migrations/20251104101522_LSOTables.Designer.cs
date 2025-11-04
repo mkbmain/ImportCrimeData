@@ -4,6 +4,7 @@ using CrimeData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Data.Migrations
 {
     [DbContext(typeof(CrimeDataDbContext))]
-    partial class ExampleDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251104101522_LSOTables")]
+    partial class LSOTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -59,8 +62,14 @@ namespace Data.Migrations
                     b.Property<short?>("FallswithinId")
                         .HasColumnType("smallint");
 
+                    b.Property<string>("LSOAcode")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int?>("LSOAcodeId")
                         .HasColumnType("int");
+
+                    b.Property<string>("LSOAname")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("LSOAnameId")
                         .HasColumnType("int");
